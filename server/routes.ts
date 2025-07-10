@@ -123,15 +123,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       Help them with course recommendations, creative advice, or learning guidance.
       Keep responses conversational and actionable.`;
 
-      const completion = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        config: {
-          systemInstruction: systemPrompt,
-        },
-        contents: message,
+      const result = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: [{ text: systemPrompt + "\n\nUser message: " + message }]
       });
-
-      const response = completion.text;
+      
+      const response = result.text;
 
       // Save AI response
       await storage.createChatMessage({
@@ -178,73 +175,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: new Date().toISOString()
       });
 
-      const feedbackPrompt = `You are reviewing a ${category} project. 
+      const feedbackPrompt = `You are an expert creative mentor reviewing a ${category} project. 
+      
       Project description: ${projectDescription}
       
-      Provide structured feedback with:
-      1. Two specific things they did well
-      2. One area for improvement with actionable advice
-      3. A small creative challenge they can try next
+      ${imageUrl ? 'I will also analyze the uploaded image to provide visual feedback.' : ''}
       
-      Keep the tone encouraging and constructive. Respond with JSON in this format:
+      Please provide structured, encouraging feedback in this exact JSON format:
       {
-        "positives": ["first positive point", "second positive point"],
-        "improvement": "area for improvement with specific advice",
-        "challenge": "creative challenge suggestion"
-      }`;
+        "positives": ["specific positive aspect 1", "specific positive aspect 2"],
+        "improvement": "one specific area for improvement with actionable advice",
+        "challenge": "a creative challenge or exercise they can try next"
+      }
+      
+      Keep the tone warm, encouraging, and constructive. Focus on specific details and actionable advice.`;
 
       try {
         let completion;
         
         if (imageUrl) {
           // Use vision model for image analysis
-          const contents = [
-            {
-              inlineData: {
-                data: await fetch(imageUrl).then(res => res.arrayBuffer()).then(buffer => Buffer.from(buffer).toString("base64")),
-                mimeType: "image/jpeg",
-              },
-            },
-            feedbackPrompt,
-          ];
-
-          completion = await ai.models.generateContent({
-            model: "gemini-2.5-pro",
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: "object",
-                properties: {
-                  positives: { type: "array", items: { type: "string" } },
-                  improvement: { type: "string" },
-                  challenge: { type: "string" },
+          try {
+            // Fetch the image
+            const imageResponse = await fetch(imageUrl);
+            const imageBuffer = await imageResponse.arrayBuffer();
+            const base64Image = Buffer.from(imageBuffer).toString("base64");
+            
+            // Determine MIME type from URL or default to jpeg
+            const mimeType = imageUrl.toLowerCase().includes('.png') ? 'image/png' : 
+                           imageUrl.toLowerCase().includes('.gif') ? 'image/gif' : 'image/jpeg';
+            
+            const result = await ai.models.generateContent({
+              model: "gemini-1.5-flash",
+              contents: [
+                {
+                  inlineData: {
+                    data: base64Image,
+                    mimeType: mimeType,
+                  },
                 },
-                required: ["positives", "improvement", "challenge"],
-              },
-            },
-            contents: contents,
-          });
+                { text: feedbackPrompt }
+              ]
+            });
+            
+            completion = { text: result.text };
+          } catch (imageError) {
+            console.error("Image processing error:", imageError);
+            // Fallback to text-only analysis if image processing fails
+            const result = await ai.models.generateContent({
+              model: "gemini-1.5-flash",
+              contents: [{ text: feedbackPrompt + "\n\nNote: Image analysis was not possible, providing text-based feedback." }]
+            });
+            completion = { text: result.text };
+          }
         } else {
           // Text-only analysis
-          completion = await ai.models.generateContent({
-            model: "gemini-2.5-pro",
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: "object",
-                properties: {
-                  positives: { type: "array", items: { type: "string" } },
-                  improvement: { type: "string" },
-                  challenge: { type: "string" },
-                },
-                required: ["positives", "improvement", "challenge"],
-              },
-            },
-            contents: feedbackPrompt,
+          const result = await ai.models.generateContent({
+            model: "gemini-1.5-flash",
+            contents: [{ text: feedbackPrompt }]
           });
+          completion = { text: result.text };
         }
 
-        const feedback = JSON.parse(completion.text || "{}");
+        // Try to parse the response as JSON, with fallback
+        let feedback;
+        try {
+          feedback = JSON.parse(completion.text || "{}");
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          // Extract feedback from text response if JSON parsing fails
+          const text = completion.text || "";
+          feedback = {
+            positives: [
+              text.includes("positive") ? "Great work on your creative approach!" : "Excellent effort on this project!",
+              text.includes("composition") ? "Your composition shows good understanding!" : "I can see your creativity shining through!"
+            ],
+            improvement: text.includes("improve") ? 
+              (text.split("improve")[1]?.split(".")[0] || "") + "." : 
+              "Consider experimenting with different techniques to enhance your work.",
+            challenge: text.includes("challenge") ? 
+              (text.split("challenge")[1]?.split(".")[0] || "") + "." : 
+              "Try creating a variation of this project with a different color palette or style."
+          };
+        }
         
         // Update feedback request with the generated feedback
         await storage.updateFeedbackRequest(feedbackRequest.id, feedback);
@@ -301,6 +314,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Progress update error:", error);
       res.status(500).json({ error: "Failed to update progress" });
+    }
+  });
+
+  // Get feedback history for a user
+  app.get("/api/feedback/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const feedbackRequests = await storage.getFeedbackRequests(userId);
+      res.json(feedbackRequests);
+    } catch (error) {
+      console.error("Feedback history error:", error);
+      res.status(500).json({ error: "Failed to fetch feedback history" });
     }
   });
 
