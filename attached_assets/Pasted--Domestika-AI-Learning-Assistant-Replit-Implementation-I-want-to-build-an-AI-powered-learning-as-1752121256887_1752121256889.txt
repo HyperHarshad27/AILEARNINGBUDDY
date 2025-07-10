@@ -1,0 +1,555 @@
+# Domestika AI Learning Assistant - Replit Implementation
+
+I want to build an AI-powered learning assistant for Domestika that helps creative learners discover personalized course paths and receive feedback on their work. This should be a full-stack web application that feels like a supportive creative mentor.
+
+## Quick Start Setup
+
+**Template:** Start with "Node.js" or "Next.js" template in Replit
+
+**Dependencies to install:**
+```bash
+npm install next react react-dom
+npm install @types/node @types/react @types/react-dom typescript
+npm install tailwindcss postcss autoprefixer
+npm install lucide-react framer-motion
+npm install openai
+npm install prisma @prisma/client
+npm install next-auth
+npm install @radix-ui/react-dialog @radix-ui/react-select
+npm install react-dropzone
+npm install recharts
+```
+
+## Project Structure
+
+Create this file structure in your Replit:
+```
+/
+├── pages/
+│   ├── api/
+│   │   ├── chat.js
+│   │   ├── recommendations.js
+│   │   ├── feedback.js
+│   │   └── upload.js
+│   ├── _app.js
+│   ├── index.js
+│   ├── onboarding.js
+│   └── dashboard.js
+├── components/
+│   ├── ChatInterface.js
+│   ├── OnboardingFlow.js
+│   ├── LearningPath.js
+│   ├── FeedbackPanel.js
+│   └── Layout.js
+├── lib/
+│   ├── ai.js
+│   ├── db.js
+│   └── utils.js
+├── data/
+│   └── courses.json
+├── styles/
+│   └── globals.css
+├── prisma/
+│   └── schema.prisma
+└── package.json
+```
+
+## Core Features to Build
+
+### 1. Landing Page (`pages/index.js`)
+```javascript
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import Layout from '../components/Layout';
+
+export default function Home() {
+  const router = useRouter();
+  
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-teal-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Your Creative Learning Journey Starts Here 🎨
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Get personalized course recommendations and feedback on your creative work
+          </p>
+          <button
+            onClick={() => router.push('/onboarding')}
+            className="bg-red-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-red-600 transition-colors"
+          >
+            Start Your Journey
+          </button>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+```
+
+### 2. Onboarding Flow (`pages/onboarding.js`)
+```javascript
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import OnboardingFlow from '../components/OnboardingFlow';
+
+const questions = [
+  {
+    id: 'skillLevel',
+    question: 'What\'s your current skill level?',
+    options: ['Beginner', 'Intermediate', 'Advanced'],
+    type: 'single'
+  },
+  {
+    id: 'interests',
+    question: 'What creative areas interest you most?',
+    options: ['Photography', 'Graphic Design', 'Illustration', 'Animation', 'Video Editing', 'Web Design'],
+    type: 'multiple'
+  },
+  {
+    id: 'goals',
+    question: 'What are your learning goals?',
+    options: ['Build a portfolio', 'Career change', 'Hobby/fun', 'Freelancing', 'Improve existing skills'],
+    type: 'multiple'
+  },
+  {
+    id: 'timeCommitment',
+    question: 'How much time can you dedicate per week?',
+    options: ['1-2 hours', '3-5 hours', '5+ hours'],
+    type: 'single'
+  }
+];
+
+export default function Onboarding() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const router = useRouter();
+
+  const handleAnswer = (questionId, answer) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  };
+
+  const handleNext = () => {
+    if (currentStep < questions.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      // Save answers and redirect to dashboard
+      localStorage.setItem('userProfile', JSON.stringify(answers));
+      router.push('/dashboard');
+    }
+  };
+
+  return (
+    <OnboardingFlow
+      questions={questions}
+      currentStep={currentStep}
+      answers={answers}
+      onAnswer={handleAnswer}
+      onNext={handleNext}
+    />
+  );
+}
+```
+
+### 3. Main Dashboard (`pages/dashboard.js`)
+```javascript
+import { useState, useEffect } from 'react';
+import Layout from '../components/Layout';
+import ChatInterface from '../components/ChatInterface';
+import LearningPath from '../components/LearningPath';
+import FeedbackPanel from '../components/FeedbackPanel';
+
+export default function Dashboard() {
+  const [userProfile, setUserProfile] = useState(null);
+  const [learningPath, setLearningPath] = useState(null);
+  const [activeTab, setActiveTab] = useState('chat');
+
+  useEffect(() => {
+    // Load user profile from localStorage
+    const profile = localStorage.getItem('userProfile');
+    if (profile) {
+      setUserProfile(JSON.parse(profile));
+      generateLearningPath(JSON.parse(profile));
+    }
+  }, []);
+
+  const generateLearningPath = async (profile) => {
+    try {
+      const response = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
+      const path = await response.json();
+      setLearningPath(path);
+    } catch (error) {
+      console.error('Error generating learning path:', error);
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto p-4">
+          <div className="bg-white rounded-lg shadow-sm mb-6 p-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Welcome back! 👋
+            </h1>
+            <p className="text-gray-600">
+              Ready to continue your creative journey?
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex space-x-4 mb-6">
+                  <button
+                    onClick={() => setActiveTab('chat')}
+                    className={`px-4 py-2 rounded-lg font-medium ${
+                      activeTab === 'chat' 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Chat Assistant
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('feedback')}
+                    className={`px-4 py-2 rounded-lg font-medium ${
+                      activeTab === 'feedback' 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Get Feedback
+                  </button>
+                </div>
+
+                {activeTab === 'chat' && <ChatInterface userProfile={userProfile} />}
+                {activeTab === 'feedback' && <FeedbackPanel userProfile={userProfile} />}
+              </div>
+            </div>
+
+            <div className="lg:col-span-1">
+              <LearningPath learningPath={learningPath} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+```
+
+## API Routes
+
+### Chat API (`pages/api/chat.js`)
+```javascript
+import { Configuration, OpenAIApi } from 'openai';
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { message, userProfile } = req.body;
+
+    const systemPrompt = `You are a supportive creative mentor at Domestika. 
+    The user has these preferences: ${JSON.stringify(userProfile)}
+    
+    Respond in a warm, encouraging tone. Use emojis appropriately. 
+    Help them with course recommendations, creative advice, or learning guidance.
+    Keep responses conversational and actionable.`;
+
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ],
+      max_tokens: 300,
+      temperature: 0.7,
+    });
+
+    const response = completion.data.choices[0].message.content;
+    res.status(200).json({ response });
+  } catch (error) {
+    console.error('Chat API error:', error);
+    res.status(500).json({ error: 'Failed to generate response' });
+  }
+}
+```
+
+### Recommendations API (`pages/api/recommendations.js`)
+```javascript
+import coursesData from '../../data/courses.json';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { skillLevel, interests, goals, timeCommitment } = req.body;
+
+    // Filter courses based on user preferences
+    let recommendedCourses = coursesData.filter(course => {
+      // Match skill level
+      if (skillLevel === 'Beginner' && course.difficulty === 'Advanced') return false;
+      if (skillLevel === 'Advanced' && course.difficulty === 'Beginner') return false;
+      
+      // Match interests
+      return interests.some(interest => 
+        course.category.toLowerCase().includes(interest.toLowerCase()) ||
+        course.tags.some(tag => tag.toLowerCase().includes(interest.toLowerCase()))
+      );
+    });
+
+    // Limit based on time commitment
+    const maxCourses = timeCommitment === '1-2 hours' ? 3 : timeCommitment === '3-5 hours' ? 5 : 7;
+    recommendedCourses = recommendedCourses.slice(0, maxCourses);
+
+    // Create learning path
+    const learningPath = {
+      courses: recommendedCourses,
+      estimatedWeeks: Math.ceil(recommendedCourses.length * 2),
+      progress: 0,
+      createdAt: new Date().toISOString()
+    };
+
+    res.status(200).json(learningPath);
+  } catch (error) {
+    console.error('Recommendations API error:', error);
+    res.status(500).json({ error: 'Failed to generate recommendations' });
+  }
+}
+```
+
+### Feedback API (`pages/api/feedback.js`)
+```javascript
+import { Configuration, OpenAIApi } from 'openai';
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { imageUrl, projectDescription, category } = req.body;
+
+    const feedbackPrompt = `You are reviewing a ${category} project. 
+    Project description: ${projectDescription}
+    
+    Provide structured feedback with:
+    1. Two specific things they did well
+    2. One area for improvement with actionable advice
+    3. A small creative challenge they can try next
+    
+    Keep the tone encouraging and constructive. Format as JSON.`;
+
+    const completion = await openai.createChatCompletion({
+      model: "gpt-4-vision-preview",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: feedbackPrompt },
+            { type: "image_url", image_url: { url: imageUrl } }
+          ]
+        }
+      ],
+      max_tokens: 400,
+    });
+
+    const feedback = JSON.parse(completion.data.choices[0].message.content);
+    res.status(200).json(feedback);
+  } catch (error) {
+    console.error('Feedback API error:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate feedback',
+      fallback: {
+        positives: ["Great effort on this project!", "I can see creativity in your approach!"],
+        improvement: "Consider exploring different color combinations to make your work more dynamic.",
+        challenge: "Try creating a variation of this project using only three colors."
+      }
+    });
+  }
+}
+```
+
+## Sample Data (`data/courses.json`)
+```json
+[
+  {
+    "id": 1,
+    "title": "Photography Fundamentals",
+    "description": "Learn the basics of composition, lighting, and camera settings",
+    "instructor": "Sarah Johnson",
+    "difficulty": "Beginner",
+    "category": "Photography",
+    "duration": "3 weeks",
+    "thumbnail": "/thumbnails/photo-basics.jpg",
+    "tags": ["photography", "basics", "composition", "lighting"]
+  },
+  {
+    "id": 2,
+    "title": "Logo Design Essentials",
+    "description": "Create memorable logos that tell a story",
+    "instructor": "Mike Chen",
+    "difficulty": "Intermediate",
+    "category": "Graphic Design",
+    "duration": "4 weeks",
+    "thumbnail": "/thumbnails/logo-design.jpg",
+    "tags": ["design", "logo", "branding", "typography"]
+  },
+  {
+    "id": 3,
+    "title": "Character Illustration",
+    "description": "Bring characters to life with digital illustration",
+    "instructor": "Anna Rivera",
+    "difficulty": "Intermediate",
+    "category": "Illustration",
+    "duration": "5 weeks",
+    "thumbnail": "/thumbnails/character-design.jpg",
+    "tags": ["illustration", "character", "digital art", "storytelling"]
+  }
+]
+```
+
+## Environment Variables
+
+Create a `.env.local` file in your Replit:
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+NEXTAUTH_SECRET=your_random_secret_here
+```
+
+## Key Components
+
+### ChatInterface Component (`components/ChatInterface.js`)
+```javascript
+import { useState } from 'react';
+import { Send } from 'lucide-react';
+
+export default function ChatInterface({ userProfile }) {
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Hi! I\'m here to help with your creative journey. What would you like to explore today? 🎨' }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input, userProfile })
+      });
+
+      const data = await response.json();
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Sorry, I encountered an error. Please try again!' 
+      }]);
+    }
+
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="h-96 flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                message.role === 'user'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-gray-100 text-gray-900'
+              }`}
+            >
+              {message.content}
+            </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg">
+              Thinking... 🤔
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="p-4 border-t">
+        <div className="flex space-x-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            placeholder="Ask me anything about your creative journey..."
+            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+          <button
+            onClick={sendMessage}
+            disabled={isLoading}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50"
+          >
+            <Send size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+## Deployment on Replit
+
+1. **Set up environment variables** in Replit's Secrets tab
+2. **Install dependencies** using the Shell
+3. **Run the development server**: `npm run dev`
+4. **Test all features** in the Replit preview
+5. **Deploy** using Replit's built-in deployment
+
+## Success Features to Track
+
+- User completes onboarding flow
+- Learning path is generated successfully
+- Chat responses are helpful and encouraging
+- Feedback system works with image uploads
+- Progress tracking shows user engagement
+
+Start with the basic structure and build incrementally. Focus on getting the core chat and onboarding working first, then add the more advanced AI features.
+
+The goal is to create a supportive, encouraging AI mentor that helps users discover their creative potential through personalized learning paths and constructive feedback! 🎨✨
