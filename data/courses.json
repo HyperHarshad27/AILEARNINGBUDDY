@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "title": "Photography Fundamentals",
+    "description": "Learn the basics of composition, lighting, and camera settings to create stunning photographs",
+    "instructor": "Sarah Johnson",
+    "difficulty": "Beginner",
+    "category": "Photography",
+    "duration": "3 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1452780212940-6f5c0d14d848?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["photography", "basics", "composition", "lighting"],
+    "rating": "4.8"
+  },
+  {
+    "id": 2,
+    "title": "Logo Design Essentials",
+    "description": "Create memorable logos that tell a story and represent brands effectively",
+    "instructor": "Mike Chen",
+    "difficulty": "Intermediate",
+    "category": "Graphic Design",
+    "duration": "4 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["design", "logo", "branding", "typography"],
+    "rating": "4.9"
+  },
+  {
+    "id": 3,
+    "title": "Character Illustration",
+    "description": "Bring characters to life with digital illustration techniques and storytelling",
+    "instructor": "Anna Rivera",
+    "difficulty": "Intermediate",
+    "category": "Illustration",
+    "duration": "5 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["illustration", "character", "digital art", "storytelling"],
+    "rating": "4.7"
+  },
+  {
+    "id": 4,
+    "title": "Advanced Composition Techniques",
+    "description": "Master the art of visual composition in photography and design",
+    "instructor": "David Miller",
+    "difficulty": "Advanced",
+    "category": "Photography",
+    "duration": "6 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["photography", "composition", "advanced", "visual design"],
+    "rating": "4.8"
+  },
+  {
+    "id": 5,
+    "title": "Color Theory Essentials",
+    "description": "Understand color relationships and create harmonious color palettes",
+    "instructor": "Maria Garcia",
+    "difficulty": "Beginner",
+    "category": "Graphic Design",
+    "duration": "3 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["color theory", "design", "palettes", "basics"],
+    "rating": "4.9"
+  },
+  {
+    "id": 6,
+    "title": "Digital Illustration Basics",
+    "description": "Start your digital art journey with fundamental illustration techniques",
+    "instructor": "Emma Taylor",
+    "difficulty": "Beginner",
+    "category": "Illustration",
+    "duration": "4 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["digital art", "illustration", "basics", "drawing"],
+    "rating": "4.6"
+  },
+  {
+    "id": 7,
+    "title": "Video Editing Masterclass",
+    "description": "Learn professional video editing techniques and storytelling",
+    "instructor": "Alex Turner",
+    "difficulty": "Intermediate",
+    "category": "Video Editing",
+    "duration": "6 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["video editing", "storytelling", "post-production", "filmmaking"],
+    "rating": "4.8"
+  },
+  {
+    "id": 8,
+    "title": "Web Design Fundamentals",
+    "description": "Create beautiful and functional websites with modern design principles",
+    "instructor": "Jordan Lee",
+    "difficulty": "Beginner",
+    "category": "Web Design",
+    "duration": "5 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["web design", "ui/ux", "responsive design", "css"],
+    "rating": "4.7"
+  },
+  {
+    "id": 9,
+    "title": "Portrait Photography Lighting",
+    "description": "Master lighting techniques for stunning portrait photography",
+    "instructor": "Rachel Smith",
+    "difficulty": "Advanced",
+    "category": "Photography",
+    "duration": "4 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1554048612-b6eb8b6db005?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["portrait photography", "lighting", "advanced", "studio"],
+    "rating": "4.9"
+  },
+  {
+    "id": 10,
+    "title": "Animation Basics",
+    "description": "Bring your illustrations to life with fundamental animation principles",
+    "instructor": "Sam Rodriguez",
+    "difficulty": "Intermediate",
+    "category": "Animation",
+    "duration": "7 weeks",
+    "thumbnail": "https://images.unsplash.com/photo-1626785774573-4b799315345d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+    "tags": ["animation", "motion graphics", "2d animation", "storytelling"],
+    "rating": "4.6"
+  }
+]
