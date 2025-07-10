@@ -77,7 +77,7 @@ The application follows a monorepo structure with clear separation between clien
 - **shadcn/ui**: Pre-built component library
 
 ### AI & External Services
-- **OpenAI**: GPT-4 integration for chat and feedback
+- **Google Gemini**: Gemini 2.5 Flash/Pro integration for chat and feedback
 - **TanStack Query**: Server state management and caching
 
 ### Development Tools
@@ -95,7 +95,7 @@ The application follows a monorepo structure with clear separation between clien
 ### Production Build
 - **Frontend**: Vite build to static assets in `dist/public`
 - **Backend**: ESBuild bundle to `dist/index.js`
-- **Environment Variables**: Database URL and OpenAI API key required
+- **Environment Variables**: Database URL and Gemini API key required
 - **Session Storage**: PostgreSQL-backed sessions with connect-pg-simple
 
 ### Database Setup

@@ -2,13 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserProfileSchema, insertChatMessageSchema, insertFeedbackRequestSchema } from "@shared/schema";
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import fs from "fs";
 import path from "path";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "sk-default_key"
+// Using Gemini 2.5 Flash as the main model
+const ai = new GoogleGenAI({ 
+  apiKey: process.env.GEMINI_API_KEY || ""
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -123,17 +123,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       Help them with course recommendations, creative advice, or learning guidance.
       Keep responses conversational and actionable.`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ],
-        max_tokens: 300,
-        temperature: 0.7,
+      const completion = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        config: {
+          systemInstruction: systemPrompt,
+        },
+        contents: message,
       });
 
-      const response = completion.choices[0].message.content;
+      const response = completion.text;
 
       // Save AI response
       await storage.createChatMessage({
@@ -200,33 +198,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (imageUrl) {
           // Use vision model for image analysis
-          completion = await openai.chat.completions.create({
-            model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { type: "text", text: feedbackPrompt },
-                  { type: "image_url", image_url: { url: imageUrl } }
-                ]
-              }
-            ],
-            max_tokens: 400,
-            response_format: { type: "json_object" }
+          const contents = [
+            {
+              inlineData: {
+                data: await fetch(imageUrl).then(res => res.arrayBuffer()).then(buffer => Buffer.from(buffer).toString("base64")),
+                mimeType: "image/jpeg",
+              },
+            },
+            feedbackPrompt,
+          ];
+
+          completion = await ai.models.generateContent({
+            model: "gemini-2.5-pro",
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "object",
+                properties: {
+                  positives: { type: "array", items: { type: "string" } },
+                  improvement: { type: "string" },
+                  challenge: { type: "string" },
+                },
+                required: ["positives", "improvement", "challenge"],
+              },
+            },
+            contents: contents,
           });
         } else {
           // Text-only analysis
-          completion = await openai.chat.completions.create({
-            model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-            messages: [
-              { role: "user", content: feedbackPrompt }
-            ],
-            max_tokens: 400,
-            response_format: { type: "json_object" }
+          completion = await ai.models.generateContent({
+            model: "gemini-2.5-pro",
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "object",
+                properties: {
+                  positives: { type: "array", items: { type: "string" } },
+                  improvement: { type: "string" },
+                  challenge: { type: "string" },
+                },
+                required: ["positives", "improvement", "challenge"],
+              },
+            },
+            contents: feedbackPrompt,
           });
         }
 
-        const feedback = JSON.parse(completion.choices[0].message.content || "{}");
+        const feedback = JSON.parse(completion.text || "{}");
         
         // Update feedback request with the generated feedback
         await storage.updateFeedbackRequest(feedbackRequest.id, feedback);
