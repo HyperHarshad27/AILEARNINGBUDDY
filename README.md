@@ -9,7 +9,7 @@ A full-stack AI-powered learning assistant for creative learners. Provides perso
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone <https://github.com/HyperHarshad27/AILEARNINGBUDDY>
    cd AILearningBuddy
    ```
 
@@ -70,6 +70,3 @@ A full-stack AI-powered learning assistant for creative learners. Provides perso
    - Real-time metrics for users and admins.
 
 ---
-
-## 📞 Contact
-For questions or demo requests, contact: [your-email@domain.com] 
